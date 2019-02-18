@@ -11,9 +11,8 @@ import GameplayKit
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
-    // MARK:-
+    
     // MARK:- VAR DECLARATION
-    // MARK:-
     
     //Sprites
     var player: SKSpriteNode?
@@ -62,9 +61,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var levelLabel: SKLabelNode?
     
     
-    // MARK:-
+    
     // MARK:- Settings at start
-    // MARK:-
+   
     override func didMove(to view: SKView) {
         
         self.view?.isMultipleTouchEnabled = true
@@ -95,7 +94,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         getBombHitFrames()
         
         
-        // Coin Bomb Spawn
+        // Baloon Bomb Cloud Spawn
         startTimers(baloonTimeInterval: baloonTimeInterval, bombTimeInterval: bombTimeInterval)
         cloudTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true, block: {
             timer in
@@ -108,9 +107,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
    
-    // MARK:-
+    
     // MARK:- Input and events
-    // MARK:-
+    
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
@@ -139,6 +138,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 createArrow()
             }
             if touches.name == "replay" {
+                for child in self.children {
+                    if child.name == "myBaloon" || child.name == "myBomb"  {
+                        child.removeFromParent()
+                    }
+                }
                 score = 0
                 lives = 2
                 levelCounter = 0
@@ -180,18 +184,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     
-    // MARK:-
+    
     // MARK:- Contacts and score/level label update
-    // MARK:-
+    
+    
     func didBegin(_ contact: SKPhysicsContact) {
         
         if contact.bodyA.categoryBitMask == baloonCategory, contact.bodyB.categoryBitMask == arrowCategory {
-            score += 3
+            score += 20
             baloonHit(sprite: contact.bodyA.node!, points: 3)
             contact.bodyB.node?.removeFromParent()
+            
         }
         if contact.bodyB.categoryBitMask == baloonCategory, contact.bodyA.categoryBitMask == arrowCategory {
-            score += 3
+            score += 20
             baloonHit(sprite: contact.bodyB.node!, points: 3)
             contact.bodyA.node?.removeFromParent()
         }
@@ -251,14 +257,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
-    // MARK:-
-    // MARK:- Sprites creation
-    // MARK:-
     
+    // MARK:- Sprites creation
     func createBaloon() {
         let baloons = ["balloon1", "balloon2", "balloon3", "balloon4", "balloon5"]
         let selector = rng(max: 5, min: 0)
         let baloon = SKSpriteNode(imageNamed: baloons[Int(selector - 1)])
+        baloon.name = "myBaloon"
         baloon.zPosition = 4
         baloon.physicsBody = SKPhysicsBody(rectangleOf: baloon.size)
         baloon.physicsBody?.affectedByGravity = false
@@ -266,7 +271,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         baloon.physicsBody?.contactTestBitMask = arrowCategory
         baloon.physicsBody?.collisionBitMask = 0
         addChild(baloon)
+        
         spawnBaloon(sprite: baloon)
+        
         
     }
     
@@ -297,7 +304,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func createBomb() {
         let bomb = SKSpriteNode(imageNamed: "bomb")
-        
+        bomb.name = "myBomb"
         bomb.zPosition = 4
         bomb.physicsBody = SKPhysicsBody(circleOfRadius: (bomb.size.width / 2) - (bomb.size.width / 8))
         bomb.physicsBody?.usesPreciseCollisionDetection = true
@@ -362,9 +369,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         spawnCloud(sprite: cloud!)
     }
     
-    // MARK:-
+    
     // MARK:- Sprites animation
-    // MARK:-
+    
     
     func spawnBaloon(sprite: SKSpriteNode) {
         
@@ -440,9 +447,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
     }
 
-    // MARK:-
+   
     // MARK:- Timers
-    // MARK:-
+  
     
     func startTimers(baloonTimeInterval: Double, bombTimeInterval: Double) {
         baloonTimer = Timer.scheduledTimer(withTimeInterval: baloonTimeInterval, repeats: true, block: {
@@ -576,15 +583,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         spawnLabel(sprite: levelLabel!)
         baloonTimer?.invalidate()
         bombTimer?.invalidate()
-        baloonTimeInterval -= 0.2
-        bombTimeInterval -= 1
+        if levelCounter > 3 {
+            bombTimeInterval -= 0.01
+            baloonTimeInterval -= 0.02
+        } else {
+            bombTimeInterval -= 1
+            baloonTimeInterval -= 0.2
+        }
         startTimers(baloonTimeInterval: baloonTimeInterval, bombTimeInterval: bombTimeInterval)
         
     }
     
     func spawnLabel(sprite: SKLabelNode) {
-        
-        //sprite.position = CGPoint(x: size.width / 2 + sprite., y: 0)
         
         //movement
         let dash1 = SKAction.moveTo(x: 0, duration: 0.8)
